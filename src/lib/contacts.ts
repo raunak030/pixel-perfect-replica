@@ -26,9 +26,9 @@ export const CONTACT_FIELDS: { key: keyof ContactInput; label: string; type?: st
   { key: "pincode", label: "PIN code" },
 ];
 
-function check<T>(res: { data: T; error: { message: string } | null }): T {
+function check<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
-  return res.data;
+  return res.data as T;
 }
 
 export async function listContacts(): Promise<Contact[]> {

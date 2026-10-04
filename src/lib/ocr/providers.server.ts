@@ -11,7 +11,7 @@ export const mockProvider: OcrProvider = {
   name: "mock",
   async extract(): Promise<OcrResult> {
     await new Promise((r) => setTimeout(r, 900));
-    const s = SAMPLES[Math.floor(Math.random() * SAMPLES.length)];
+    const s = SAMPLES[Math.floor(Math.random() * SAMPLES.length)]!;
     const data = { alternate_mobile: "", whatsapp: s.mobile, notes: "", ...s };
     return {
       provider: "mock",
