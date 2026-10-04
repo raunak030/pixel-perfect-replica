@@ -14,7 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_name: string
+          country: string | null
+          created_at: string
+          id: string
+          industry: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_name: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_name?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          address: string | null
+          alternate_mobile: string | null
+          card_image_url: string | null
+          category: string | null
+          city: string | null
+          company_name: string | null
+          country: string | null
+          created_at: string
+          date_met: string | null
+          designation: string | null
+          email: string | null
+          event_source: string | null
+          full_name: string
+          id: string
+          linkedin: string | null
+          mobile: string | null
+          needs_review: boolean
+          notes: string | null
+          pincode: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          alternate_mobile?: string | null
+          card_image_url?: string | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          date_met?: string | null
+          designation?: string | null
+          email?: string | null
+          event_source?: string | null
+          full_name?: string
+          id?: string
+          linkedin?: string | null
+          mobile?: string | null
+          needs_review?: boolean
+          notes?: string | null
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          alternate_mobile?: string | null
+          card_image_url?: string | null
+          category?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          date_met?: string | null
+          designation?: string | null
+          email?: string | null
+          event_source?: string | null
+          full_name?: string
+          id?: string
+          linkedin?: string | null
+          mobile?: string | null
+          needs_review?: boolean
+          notes?: string | null
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      scan_records: {
+        Row: {
+          confidence_score: number | null
+          contact_id: string | null
+          created_at: string
+          extraction_status: string
+          id: string
+          ocr_raw_text: string | null
+          original_image_url: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          contact_id?: string | null
+          created_at?: string
+          extraction_status?: string
+          id?: string
+          ocr_raw_text?: string | null
+          original_image_url?: string | null
+          user_id?: string
+        }
+        Update: {
+          confidence_score?: number | null
+          contact_id?: string | null
+          created_at?: string
+          extraction_status?: string
+          id?: string
+          ocr_raw_text?: string | null
+          original_image_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_records_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
