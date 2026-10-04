@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Images, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractCard } from "@/lib/ocr/ocr.functions";
-import { recognizeCard } from "@/lib/ocr/tesseract.client";
+import { recognizeCardOnDevice } from "@/lib/ocr/recognize";
 import type { OcrResult } from "@/lib/ocr/types";
 import { createContact, fileToBase64, uploadCardImage } from "@/lib/contacts";
 import { Button } from "@/components/ui/button";
@@ -92,9 +92,10 @@ function BulkPage() {
   async function processOne(item: Item) {
     setItem(item.id, { status: "processing" });
     try {
+      // recognize.ts is isomorphic-safe; Tesseract itself loads in the browser only.
       const r: OcrResult =
         method === "device"
-          ? await recognizeCard(item.file)
+          ? await recognizeCardOnDevice(item.file)
           : await extract({
               data: { imageBase64: await fileToBase64(item.file), mimeType: item.file.type },
             });

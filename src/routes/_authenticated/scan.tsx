@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Upload, Loader2, FlaskConical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractCard } from "@/lib/ocr/ocr.functions";
-import { recognizeCard } from "@/lib/ocr/tesseract.client";
+import { recognizeCardOnDevice } from "@/lib/ocr/recognize";
 import type { OcrResult } from "@/lib/ocr/types";
 import {
   createContact,
@@ -77,7 +77,7 @@ function ScanPage() {
     const today = new Date().toISOString().slice(0, 10);
     try {
       if (method === "device") {
-        const r = await recognizeCard(file, setOcrProgress);
+        const r = await recognizeCardOnDevice(file, setOcrProgress);
         setOcr(r);
         if (!r.raw_text)
           toast.warning("Couldn't read any text from this image — fill in the details manually.");
