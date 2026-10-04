@@ -14,18 +14,18 @@ Nothing from OCR is ever saved without your confirmation.
 
 ## Pages
 
-| Route | Page |
-|---|---|
-| `/` | Marketing landing (redirects to dashboard when signed in) |
-| `/auth` | Login — email/password + Google OAuth |
-| `/dashboard` | Stats (cards, contacts, companies, needs review), global search, Scan CTA, recent contacts |
-| `/contacts` | Instant search (name, company, mobile, email, city, designation, category, event, notes) + filters (category, company, city, event, date added, date met) + CSV/Excel/vCard export |
-| `/contacts/$id` | Contact profile: call, WhatsApp, email, website, LinkedIn, Google Maps, edit, delete, original card image |
-| `/scan` | Single-card upload: drag-drop, file picker, mobile camera capture, preview, Extract → editable review form → duplicate check → save |
-| `/bulk` | Multi-image import (up to 500): progress `done / total`, per-card status (Queued / Processing / Extracted / Needs review / Failed), worker-pool of 3 so the UI never blocks |
-| `/companies` | Companies derived from contacts + `companies` table, with contact counts |
-| `/categories` | Default + custom categories with counts |
-| `/settings` | OCR mode notice + category management |
+| Route           | Page                                                                                                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`             | Marketing landing (redirects to dashboard when signed in)                                                                                                                          |
+| `/auth`         | Login — email/password + Google OAuth                                                                                                                                              |
+| `/dashboard`    | Stats (cards, contacts, companies, needs review), global search, Scan CTA, recent contacts                                                                                         |
+| `/contacts`     | Instant search (name, company, mobile, email, city, designation, category, event, notes) + filters (category, company, city, event, date added, date met) + CSV/Excel/vCard export |
+| `/contacts/$id` | Contact profile: call, WhatsApp, email, website, LinkedIn, Google Maps, edit, delete, original card image                                                                          |
+| `/scan`         | Single-card upload: drag-drop, file picker, mobile camera capture, preview, Extract → editable review form → duplicate check → save                                                |
+| `/bulk`         | Multi-image import (up to 500): progress `done / total`, per-card status (Queued / Processing / Extracted / Needs review / Failed), worker-pool of 3 so the UI never blocks        |
+| `/companies`    | Companies derived from contacts + `companies` table, with contact counts                                                                                                           |
+| `/categories`   | Default + custom categories with counts                                                                                                                                            |
+| `/settings`     | OCR mode notice + category management                                                                                                                                              |
 
 ## Run locally
 
@@ -59,14 +59,20 @@ only ever sees their own rows/images.
 
 ## Configure OCR
 
-`src/lib/ocr/providers.server.ts` exports `getOcrProvider(): OcrProvider`.
+On-device reading is the default and needs no keys: `src/lib/ocr/tesseract.client.ts`
+runs Tesseract (WASM, English, ~4 MB language data loaded once from CDN) entirely in
+the browser, and `src/lib/ocr/parse.ts` turns the raw text into structured fields with
+documented heuristic v1 patterns (email/phone/URL/pin by regex; name/company/designation/
+city by line patterns). Low-confidence results are flagged for review, and unmatched
+lines are preserved in `notes`. The Scan and Bulk pages offer an explicit
+“On-device / Sample data” switch.
 
-- Default: `mockProvider` returns clearly-labelled **sample data** (banner: “Practice mode”)
-  so the whole app is testable with no keys.
-- To connect a real API: implement `OcrProvider { name, extract({imageBase64, mimeType}) → OcrResult }`,
-  return it from `getOcrProvider()` when `OCR_PROVIDER` is set, and add keys to `.env`
-  (`OCR_API_KEY`, `OCR_ENDPOINT`). The server function `extractCard`
-  (`src/lib/ocr/ocr.functions.ts`) validates auth + MIME type and stays unchanged.
+`src/lib/ocr/providers.server.ts` keeps the replaceable server-side `OcrProvider`
+(“Sample data” mode returns clearly-labelled practice details). To connect a real
+cloud API instead: implement `OcrProvider { name, extract({imageBase64, mimeType}) →
+OcrResult }`, return it from `getOcrProvider()` when `OCR_PROVIDER` is set, and add keys
+to `.env` (`OCR_API_KEY`, `OCR_ENDPOINT`). The server function `extractCard`
+(`src/lib/ocr/ocr.functions.ts`) validates auth + MIME type and stays unchanged.
 
 `OcrResult` shape:
 
@@ -101,7 +107,7 @@ No Lovable history is rewritten — push to the connected branch and Lovable syn
 2. Optional bulk defaults (event/source, date met, category) attach to every card.
 3. `Start import` runs a worker-pool (`CONCURRENCY = 3`): each worker loops
    `extract → upload to Storage → insert contact (needs_review when mock/low-confidence/
-   nameless) → insert scan_record`, updating per-card status without blocking the UI.
+nameless) → insert scan_record`, updating per-card status without blocking the UI.
 4. Progress is `done / total` + a progress bar; `Stop` sets a flag workers check between cards.
 5. Each finished row links to its contact for review. Expansion path: move `processOne`
    into a background queue (e.g. Supabase Edge Function + pg-boss) — the status enum and
@@ -109,12 +115,12 @@ No Lovable history is rewritten — push to the connected branch and Lovable syn
 
 ## Environment variables
 
-| Var | Used where | Required |
-|---|---|---|
-| `SUPABASE_URL` / `VITE_SUPABASE_URL` | server / client Supabase | yes |
-| `SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_PUBLISHABLE_KEY` | server / client Supabase | yes |
-| `OCR_PROVIDER` | `getOcrProvider()` switch | no (mock otherwise) |
-| `OCR_API_KEY`, `OCR_ENDPOINT` | your future provider | no |
+| Var                                                          | Used where                | Required            |
+| ------------------------------------------------------------ | ------------------------- | ------------------- |
+| `SUPABASE_URL` / `VITE_SUPABASE_URL`                         | server / client Supabase  | yes                 |
+| `SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_PUBLISHABLE_KEY` | server / client Supabase  | yes                 |
+| `OCR_PROVIDER`                                               | `getOcrProvider()` switch | no (mock otherwise) |
+| `OCR_API_KEY`, `OCR_ENDPOINT`                                | your future provider      | no                  |
 
 ## Error handling
 

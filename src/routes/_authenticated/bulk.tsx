@@ -6,11 +6,14 @@ import { toast } from "sonner";
 import { Images, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractCard } from "@/lib/ocr/ocr.functions";
+import { recognizeCard } from "@/lib/ocr/tesseract.client";
+import type { OcrResult } from "@/lib/ocr/types";
 import { createContact, fileToBase64, uploadCardImage } from "@/lib/contacts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { OcrMethodToggle, type OcrMethod } from "@/components/OcrMethodToggle";
 
 export const Route = createFileRoute("/_authenticated/bulk")({
   head: () => ({
@@ -47,6 +50,7 @@ function BulkPage() {
   const [eventSource, setEventSource] = useState("");
   const [dateMet, setDateMet] = useState(new Date().toISOString().slice(0, 10));
   const [category, setCategory] = useState("");
+  const [method, setMethod] = useState<OcrMethod>("device");
   const stopRef = useRef(false);
 
   const done = items.filter(
@@ -88,9 +92,12 @@ function BulkPage() {
   async function processOne(item: Item) {
     setItem(item.id, { status: "processing" });
     try {
-      const r = await extract({
-        data: { imageBase64: await fileToBase64(item.file), mimeType: item.file.type },
-      });
+      const r: OcrResult =
+        method === "device"
+          ? await recognizeCard(item.file)
+          : await extract({
+              data: { imageBase64: await fileToBase64(item.file), mimeType: item.file.type },
+            });
       const needsReview = r.mock || r.confidence < 0.6 || !r.data.full_name;
       const path = await uploadCardImage(item.file);
       const contact = await createContact({
@@ -105,13 +112,21 @@ function BulkPage() {
         contact_id: contact.id,
         original_image_url: path,
         ocr_raw_text: r.raw_text,
-        extraction_status: r.mock ? "mock" : "success",
+        extraction_status: r.mock
+          ? "mock"
+          : r.provider === "tesseract-device"
+            ? "device"
+            : "success",
         confidence_score: r.confidence,
       });
       setItem(item.id, {
         status: needsReview ? "needs-review" : "extracted",
         contactId: contact.id,
-        message: r.mock ? "Sample data — review before use" : undefined,
+        message: r.mock
+          ? "Sample data — review before use"
+          : !r.raw_text
+            ? "No text found — review manually"
+            : undefined,
       });
     } catch (e) {
       setItem(item.id, {
@@ -140,9 +155,11 @@ function BulkPage() {
     setRunning(true);
     stopRef.current = false;
     await qc.invalidateQueries().catch(() => undefined);
-    // Worker-pool: CONCURRENCY parallel workers over a shared queue — UI stays responsive.
+    // Worker-pool over a shared queue so the UI stays responsive. On-device
+    // OCR reuses one Tesseract worker, so it runs strictly one card at a time.
+    const parallelism = method === "device" ? 1 : CONCURRENCY;
     const queue = [...pending];
-    const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+    const workers = Array.from({ length: Math.min(parallelism, queue.length) }, async () => {
       while (queue.length > 0 && !stopRef.current) {
         const next = queue.shift();
         if (next) await processOne(next);
@@ -190,12 +207,13 @@ function BulkPage() {
             type="file"
             accept={TYPES.join(",")}
             multiple
-            hidden
+            className="sr-only"
             onChange={(e) => {
               if (e.target.files) addFiles(e.target.files);
               e.target.value = "";
             }}
           />
+          <OcrMethodToggle value={method} onChange={setMethod} />
           <div className="rounded-lg border bg-card p-4 space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="bulk-event">Event / source (applied to all)</Label>
@@ -249,9 +267,10 @@ function BulkPage() {
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Imports run {CONCURRENCY} at a time so the page stays responsive for 100–500 cards. Bulk
-            saves are marked “needs review” when data is uncertain — nothing is treated as final
-            without your check.
+            {method === "device"
+              ? "On-device reading runs one card at a time through the shared OCR worker. Bulk saves are marked “needs review” when data is uncertain."
+              : `Sample mode runs ${CONCURRENCY} at a time with practice data.`}{" "}
+            Nothing is treated as final without your check.
           </p>
         </div>
 
