@@ -1,15 +1,21 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Home, Users, ScanLine, Settings, LogOut, CreditCard } from "lucide-react";
+import { Building2, Home, Images, ScanLine, Settings, LogOut, CreditCard, Tags, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
-  { to: "/dashboard", label: "Home", icon: Home },
-  { to: "/contacts", label: "Contacts", icon: Users },
-  { to: "/scan", label: "Scan", icon: ScanLine },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/dashboard", label: "Home", desktopLabel: "Dashboard", icon: Home },
+  { to: "/contacts", label: "Contacts", desktopLabel: "Contacts", icon: Users },
+  { to: "/scan", label: "Scan", desktopLabel: "Scan", icon: ScanLine },
+  { to: "/settings", label: "Settings", desktopLabel: "Settings", icon: Settings },
+] as const;
+
+const MORE = [
+  { to: "/bulk", label: "Bulk import", icon: Images },
+  { to: "/companies", label: "Companies", icon: Building2 },
+  { to: "/categories", label: "Categories", icon: Tags },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -42,7 +48,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
             >
-              <n.icon className="size-4" /> {n.label === "Home" ? "Dashboard" : n.label}
+              <n.icon className="size-4" /> {n.desktopLabel}
+            </Link>
+          ))}
+          <div className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-sidebar-foreground/60">Manage</div>
+          {MORE.map((n) => (
+            <Link
+              key={n.to}
+              to={n.to}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+            >
+              <n.icon className="size-4" /> {n.label}
             </Link>
           ))}
         </nav>

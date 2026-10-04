@@ -1,10 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import { z } from "zod";
+import { toast } from "sonner";
 import { listContacts, type Contact } from "@/lib/contacts";
+import { contactsToCsv, contactsToExcel, contactsToVCard, downloadFile } from "@/lib/export";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ContactRow } from "@/components/ContactRow";
 import { EmptyState } from "./dashboard";
 
@@ -46,7 +50,25 @@ function ContactsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">Contacts</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">Contacts</h1>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" disabled={rows.length === 0}><Download /> Export ({rows.length})</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => { try { downloadFile(`cardvault-contacts-${new Date().toISOString().slice(0, 10)}.csv`, "text/csv", contactsToCsv(rows)); } catch { toast.error("Export failed."); } }}>
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { try { downloadFile(`cardvault-contacts-${new Date().toISOString().slice(0, 10)}.xls`, "application/vnd.ms-excel", contactsToExcel(rows)); } catch { toast.error("Export failed."); } }}>
+              Export as Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { try { downloadFile(`cardvault-contacts-${new Date().toISOString().slice(0, 10)}.vcf`, "text/vcard", contactsToVCard(rows)); } catch { toast.error("Export failed."); } }}>
+              Export as vCard (.vcf)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input autoFocus className="pl-9 h-11 bg-card" placeholder="Search name, company, phone, email, city, event, notes…" value={q} onChange={(e) => setQ(e.target.value)} />

@@ -26,9 +26,10 @@ export const CONTACT_FIELDS: { key: keyof ContactInput; label: string; type?: st
   { key: "pincode", label: "PIN code" },
 ];
 
-function check<T>(res: { data: T | null; error: { message: string } | null }): T {
+function check<T>(res: { data: T; error: { message: string } | null }): NonNullable<T> {
   if (res.error) throw new Error(res.error.message);
-  return res.data as T;
+  if (res.data == null) throw new Error("Database returned no data. Check your connection and try again.");
+  return res.data as NonNullable<T>;
 }
 
 export async function listContacts(): Promise<Contact[]> {
@@ -131,6 +132,38 @@ export async function dashboardStats() {
     supabase.from("contacts").select("id", { count: "exact", head: true }).eq("needs_review", true),
   ]);
   return { cards: cards.count ?? 0, contacts: contacts.count ?? 0, companies: companies.count ?? 0, review: review.count ?? 0 };
+}
+
+export interface CompanyRow {
+  id: string;
+  company_name: string;
+  website: string | null;
+  city: string | null;
+  contactCount: number;
+}
+
+export async function listCompanies(): Promise<CompanyRow[]> {
+  const [companies, contacts] = await Promise.all([
+    check(await supabase.from("companies").select("id,company_name,website,city").order("company_name")),
+    check(await supabase.from("contacts").select("company_name")),
+  ]);
+  const counts = new Map<string, number>();
+  for (const c of contacts) {
+    const k = (c.company_name ?? "").trim().toLowerCase();
+    if (k) counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  const rows: CompanyRow[] = companies.map((c) => ({
+    id: c.id, company_name: c.company_name, website: c.website, city: c.city,
+    contactCount: counts.get(c.company_name.trim().toLowerCase()) ?? 0,
+  }));
+  // Include companies that only exist on contacts (not yet in companies table).
+  for (const [k, n] of counts) {
+    if (!rows.some((r) => r.company_name.trim().toLowerCase() === k)) {
+      const original = contacts.find((c) => (c.company_name ?? "").trim().toLowerCase() === k)?.company_name ?? k;
+      rows.push({ id: `contact-only:${k}`, company_name: original, website: null, city: null, contactCount: n });
+    }
+  }
+  return rows.sort((a, b) => a.company_name.localeCompare(b.company_name));
 }
 
 export function fileToBase64(file: File): Promise<string> {

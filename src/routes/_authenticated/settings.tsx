@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -30,6 +30,16 @@ function SettingsPage() {
       <section className="rounded-lg border bg-card p-5 space-y-2">
         <h2 className="font-semibold">Card reading</h2>
         <p className="text-sm text-muted-foreground">Practice mode is on: scans fill in sample details so you can test the full flow. A real card reader can be connected later.</p>
+      </section>
+      <section className="rounded-lg border bg-card p-5 space-y-2">
+        <h2 className="font-semibold">Manage</h2>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Link to="/bulk" className="text-primary hover:underline">Bulk import</Link>
+          <span className="text-muted-foreground">·</span>
+          <Link to="/companies" className="text-primary hover:underline">Companies</Link>
+          <span className="text-muted-foreground">·</span>
+          <Link to="/categories" className="text-primary hover:underline">Categories</Link>
+        </div>
       </section>
       <section className="rounded-lg border bg-card p-5 space-y-4">
         <h2 className="font-semibold">Categories</h2>

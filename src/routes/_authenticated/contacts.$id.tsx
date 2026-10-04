@@ -28,8 +28,8 @@ function ContactPage() {
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (isError || !c) return <p>Contact not found. <Link to="/contacts" search={{ q: "" }} className="text-primary">Back to contacts</Link></p>;
 
-  async function save() {
-    if (!edit?.full_name?.trim()) return toast.error("Full name is required.");
+  async function save(): Promise<void> {
+    if (!edit?.full_name?.trim()) { toast.error("Full name is required."); return; }
     setBusy(true);
     try { await updateContact(id, { ...edit, needs_review: false }); await qc.invalidateQueries(); setEdit(null); toast.success("Saved"); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Save failed."); } finally { setBusy(false); }

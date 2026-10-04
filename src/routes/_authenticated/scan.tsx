@@ -33,10 +33,10 @@ function ScanPage() {
   const [form, setForm] = useState<ContactInput | null>(null);
   const [dupes, setDupes] = useState<Contact[]>([]);
 
-  function pick(f?: File | null) {
+  function pick(f?: File | null): void {
     if (!f) return;
-    if (!TYPES.includes(f.type)) return toast.error("Invalid image. Please use JPG, PNG or WEBP.");
-    if (f.size > 10 * 1024 * 1024) return toast.error("Image is larger than 10 MB.");
+    if (!TYPES.includes(f.type)) { toast.error("Invalid image. Please use JPG, PNG or WEBP."); return; }
+    if (f.size > 10 * 1024 * 1024) { toast.error("Image is larger than 10 MB."); return; }
     setFile(f); setPreview(URL.createObjectURL(f)); setOcr(null); setForm(null);
   }
 
